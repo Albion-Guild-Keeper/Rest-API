@@ -1,4 +1,4 @@
-use actix_web::{get, put, HttpResponse};
+use actix_web::{put, HttpResponse};
 use actix_web::web::{Json, Path};
 use crate::utils::surreal_int::SurrealInt;
 use serde::Deserialize;
