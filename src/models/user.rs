@@ -6,7 +6,6 @@ use crate::utils::surreal_int::SurrealInt;
 #[derive(Debug, Serialize, Deserialize)]
 pub struct User {
     pub id: SurrealInt, 
-    pub server_name: String, 
     pub username: String,
     pub joined_at: String
 }
