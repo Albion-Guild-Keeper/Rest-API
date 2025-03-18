@@ -1,7 +1,7 @@
 use actix_cors::Cors;
 use actix_web::{
     get,
-    web::{self},
+    web::{self, get},
     HttpResponse,
 };
 use serde_json::json;
@@ -15,7 +15,7 @@ mod utils;
 
 use crate::routes::{
     auth::sign_in::sign_in, auth::sign_up::sign_up, discord::join_discord, test::test,
-    user::join_user,
+    user::join_user, accounts::get_account, auth::discord::discord_auth,
 };
 
 #[get("/")]
@@ -41,7 +41,10 @@ async fn main() -> ShuttleActixWeb<impl FnOnce(&mut web::ServiceConfig) + Send +
                 .service(test)
                 .service(join_user)
                 .service(sign_in)
-                .service(sign_up),
+                .service(sign_up)
+                .service(get_account)
+                .service(discord_auth),  
+                
         );
     };
 

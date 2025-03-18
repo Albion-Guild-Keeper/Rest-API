@@ -1,5 +1,3 @@
-use actix_web::HttpResponse;
-
 use crate::database::connect as database;
 use crate::models::discord::Discord;
 use crate::utils::surreal_int::SurrealInt;
