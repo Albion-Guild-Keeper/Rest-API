@@ -3,12 +3,10 @@ use actix_web::{get, HttpResponse};
 
 #[get("auth/discord")]
 pub async fn discord_auth() -> HttpResponse {
-    let access_token = "12345".to_string();
-    let expires_in = 604800;
-    let scope = "identify".to_string();
+    let access_token = "1234567890".to_string();
     // @todo da rimuovere questi let fissi
 
-    match controller::discord_auth(access_token, expires_in, scope).await {
+    match controller::discord_auth(access_token.clone()).await {
         Ok(_) => {
             HttpResponse::SeeOther().append_header(("Location", "http://localhost:8080/")).finish()
         },
