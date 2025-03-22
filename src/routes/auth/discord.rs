@@ -1,15 +1,11 @@
-use crate::controllers::auth::discord as controller;
-use actix_web::{get, HttpResponse};
+use actix_web::{get, HttpRequest, HttpResponse};
 
-#[get("auth/discord")]
-pub async fn discord_auth() -> HttpResponse {
-    let access_token = "1234567890".to_string();
-    // @todo da rimuovere questi let fissi
+use crate::controllers::auth::discord_callback as controller;
 
-    match controller::discord_auth(access_token.clone()).await {
-        Ok(_) => {
-            HttpResponse::SeeOther().append_header(("Location", "http://localhost:8080/")).finish()
-        },
-        Err(e) => HttpResponse::InternalServerError().body(e.to_string()),
+#[get("/auth/discord/callback")]
+pub async fn discord_callback(req: HttpRequest) -> HttpResponse {
+    match controller::discord_callback(req).await {
+        Ok(cookie) => HttpResponse::Ok().cookie(cookie).finish(),
+        Err(error) => HttpResponse::InternalServerError().body(format!("Error: {:#?}", error)),
     }
 }
