@@ -23,11 +23,16 @@ pub async fn is_me_auth(req: HttpRequest) -> AuthResult<String> {
 
     dbg!(&query);
 
-    let mut res = db.query(query).await.map_err(|e| AuthError::DatabaseQueryError(e.to_string()))?;
+    let mut res = db
+        .query(query)
+        .await
+        .map_err(|e| AuthError::DatabaseQueryError(e.to_string()))?;
 
     dbg!(&res);
 
-    let query_response: Vec<QueryResponse> = res.take(0).map_err(|e| AuthError::DatabaseResponseError(e.to_string()))?;
+    let query_response: Vec<QueryResponse> = res
+        .take(0)
+        .map_err(|e| AuthError::DatabaseResponseError(e.to_string()))?;
 
     dbg!(&query_response);
 

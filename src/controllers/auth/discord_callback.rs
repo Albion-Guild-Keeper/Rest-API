@@ -32,7 +32,6 @@ async fn get_code_from_query_string(query_string: String) -> CallBackResult<Stri
         .map(|s| s.to_string())
         .ok_or(CallBackError::MissingCode("Missing code".to_string()))?;
 
-        dbg!(&code);
     Ok(code)
 }
 
@@ -71,7 +70,6 @@ async fn ask_discord_for_token(code: String) -> CallBackResult<TokenResponse> {
         .send()
         .await
         .map_err(|e| CallBackError::TokenRequestFailed(e.to_string()))?;
-    dbg!(&response);
 
     if response.status().is_success() {
         let text = response.text().await.map_err(|e| CallBackError::TokenResponseParseError(e.to_string()))?;
@@ -102,13 +100,9 @@ async fn ask_discord_for_user_info(token: &TokenResponse) -> CallBackResult<User
         .await
         .map_err(|e| CallBackError::UserInfoRequestFailed(e.to_string()))?;
 
-    dbg!(&response);
-
     if response.status().is_success() {
         let text = response.text().await.map_err(|e| CallBackError::TokenResponseParseError(e.to_string()))?;
-        dbg!(&text);
         let user_info = serde_json::from_str::<UserInfoResponse>(&text).map_err(|e| CallBackError::TokenResponseParseError(e.to_string()))?;
-        dbg!(&user_info);
         Ok(user_info)
     } else {
         Err(CallBackError::UserInfoRequestFailed(
@@ -135,8 +129,6 @@ async fn create_user(user_info: UserInfoResponse) -> CallBackResult<()> {
     let execute = db.query(query)
         .await
         .map_err(|e| CallBackError::DatabaseQueryError(e.to_string()))?;
-
-    dbg!(execute);
 
     Ok(())
 }
@@ -166,8 +158,6 @@ async fn save_cookie_to_database(token: &TokenResponse) -> CallBackResult<()> {
     let res = db.query(query.to_string())
         .await
         .map_err(|err| CallBackError::DatabaseQueryError(err.to_string()))?;
-
-    dbg!(&res);
 
     Ok(())
 }
