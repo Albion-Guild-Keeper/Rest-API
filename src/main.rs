@@ -14,7 +14,7 @@ mod models;
 mod routes;
 mod utils;
 
-use crate::routes::{test::test, auth::discord::discord_callback};
+use crate::routes::{test::test, authentication::discord_callback::discord_callback, guild_create::guild_create, authentication::get_guilds::get_guilds};
 
 #[get("/")]
 async fn admin_check() -> HttpResponse {
@@ -36,6 +36,8 @@ async fn main() -> ShuttleActixWeb<impl FnOnce(&mut web::ServiceConfig) + Send +
                 .wrap(cors)
                 .service(admin_check)
                 .service(discord_callback)
+                .service(guild_create)
+                .service(get_guilds)
                 .service(test),
                 
         );

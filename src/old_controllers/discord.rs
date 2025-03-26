@@ -11,13 +11,13 @@ pub async fn join_discord(
 
     let db = database::connect().await.unwrap(); 
     // Check if the discord_id already exists
-    let existing_discord: Option<Discord> = db.select(("discords", id.to_string())).await?;
+    let existing_discord: Option<Discord> = db.select(("guilds", id.to_string())).await?;
 
     match existing_discord {
         Some(mut existing) => {
             // Discord ID exists, update only the discord_name
             existing.discord_name = discord_name;
-            let updated_discord: Option<Discord> = db.update(("discords", id.to_string())).content(existing).await?;
+            let updated_discord: Option<Discord> = db.update(("guilds", id.to_string())).content(existing).await?;
             Ok(updated_discord)
         }
         None => {
@@ -28,7 +28,7 @@ pub async fn join_discord(
                 joined_at,
             };
 
-            let created_discord: Option<Discord> = db.create("discords")
+            let created_discord: Option<Discord> = db.create("guilds")
                 .content(discord)
                 .await?;
             

@@ -1,31 +1,32 @@
-use actix_web::cookie::Cookie;
 use actix_web::HttpRequest;
 use reqwest::Client;
 use serde::{Deserialize, Serialize};
-use actix_web::cookie::time::Duration;
 
 use crate::utils::database as database;
+use crate::models::cookies::Cookies;
 
 const CLIENT_ID: &'static str = "1248308695323115543";
 const CLIENT_SECRET: &'static str = "t2DWinSWnDhbAAw6kpJbvDjVyRfCDoN4";
 const REDIRECT_URI: &'static str = "http://localhost:8000/api/v1/auth/discord/callback";
 
-const DAY_IN_SECONDS: i64 = 86400;
-
-pub async fn discord_callback(req: HttpRequest) -> CallBackResult<Cookie<'static>> {
+pub async fn discord_callback(req: HttpRequest) -> Result<Cookies, CallBackError> {
     let query_string = req.query_string().to_string();
 
     let code = get_code_from_query_string(query_string).await?;
     let token = ask_discord_for_token(code).await?;
     let user_info = ask_discord_for_user_info(&token).await?;
-    let _ = create_user(user_info).await?;
+    let _ = create_user(user_info.clone()).await?;
     let _ = save_cookie_to_database(&token).await?;
-    let cookie = save_cookie_to_client(&token).await?;
 
-    Ok(cookie)
+    let cookies = Cookies {
+        access_token: token.access_token.clone(),
+        user_id: user_info.id.clone(),
+    };
+
+    Ok(cookies)
 }
 
-async fn get_code_from_query_string(query_string: String) -> CallBackResult<String> {
+async fn get_code_from_query_string(query_string: String) -> Result<String, CallBackError> {
     let code = query_string
         .split('=')
         .nth(1)
@@ -53,12 +54,12 @@ struct TokenResponse {
     token_type: String,
 }
 
-async fn ask_discord_for_token(code: String) -> CallBackResult<TokenResponse> {
+async fn ask_discord_for_token(code: String) -> Result<TokenResponse, CallBackError> {
     let body = BodyRequest {
         grant_type: "authorization_code".to_string(),
         client_id: CLIENT_ID.to_string(),
         client_secret: CLIENT_SECRET.to_string(),
-        code: code,
+        code,
         redirect_uri: REDIRECT_URI.to_string(),
     };
 
@@ -82,7 +83,7 @@ async fn ask_discord_for_token(code: String) -> CallBackResult<TokenResponse> {
     }
 }
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize, Clone)]
 struct UserInfoResponse {
     id: String,
     username: String,
@@ -91,7 +92,7 @@ struct UserInfoResponse {
     locale: String,
 }
 
-async fn ask_discord_for_user_info(token: &TokenResponse) -> CallBackResult<UserInfoResponse> {
+async fn ask_discord_for_user_info(token: &TokenResponse) -> Result<UserInfoResponse, CallBackError> {
     let client = Client::new();
     let response = client
         .get("https://discord.com/api/users/@me")
@@ -111,7 +112,7 @@ async fn ask_discord_for_user_info(token: &TokenResponse) -> CallBackResult<User
     }
 }
 
-async fn create_user(user_info: UserInfoResponse) -> CallBackResult<()> {
+async fn create_user(user_info: UserInfoResponse) -> Result<(), CallBackError> {
     let db = database::connect()
         .await
         .map_err(|e| CallBackError::DatabaseConnectionError(e.to_string()))?;
@@ -126,25 +127,14 @@ async fn create_user(user_info: UserInfoResponse) -> CallBackResult<()> {
         true,
     );
 
-    let execute = db.query(query)
+    let _execute = db.query(query)
         .await
         .map_err(|e| CallBackError::DatabaseQueryError(e.to_string()))?;
 
     Ok(())
 }
 
-async fn save_cookie_to_client(token: &TokenResponse) -> CallBackResult<Cookie<'static>> {
-    let cookie = Cookie::build("access_token", token.access_token.clone())
-        .path("/")
-        .http_only(true)
-        .secure(true)
-        .max_age(Duration::days(token.expires_in / DAY_IN_SECONDS))
-        .finish();
-
-    Ok(cookie)
-}
-
-async fn save_cookie_to_database(token: &TokenResponse) -> CallBackResult<()> {
+async fn save_cookie_to_database(token: &TokenResponse) -> Result<(), CallBackError> {
     let db = database::connect()
         .await
         .map_err(|e| CallBackError::DatabaseConnectionError(e.to_string()))?;
@@ -155,14 +145,12 @@ async fn save_cookie_to_database(token: &TokenResponse) -> CallBackResult<()> {
     );
     dbg!(&query);
 
-    let res = db.query(query.to_string())
+    let _res = db.query(query.to_string())
         .await
         .map_err(|err| CallBackError::DatabaseQueryError(err.to_string()))?;
 
     Ok(())
 }
-
-pub type CallBackResult<T> = Result<T, CallBackError>;
 
 #[derive(Debug)]
 #[allow(dead_code)]
