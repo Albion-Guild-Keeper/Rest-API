@@ -1,1 +1,1 @@
-pub mod is_me_auth;
+pub mod is_authenticated_middleware;

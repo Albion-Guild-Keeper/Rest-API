@@ -1,1 +1,2 @@
-pub mod cookies;
+pub mod discord;
+pub mod auth;

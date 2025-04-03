@@ -1,16 +1,15 @@
-use actix_web::{get, HttpRequest, HttpResponse};
+use actix_web::{get, HttpResponse};
+use crate::controllers::test as controller;
 
-use crate::middlewares::is_me_auth;
-
+#[utoipa::path(
+    get,
+    path = "api/v1/test",
+    responses(
+        (status = 200, description = "Test endpoint", body = String),
+    ),
+    tags = ["Test"],
+)]
 #[get("/test")]
-pub async fn test(req: HttpRequest) -> HttpResponse {
-    match is_me_auth::is_me_auth(req).await {
-        Ok(response) => {
-            dbg!(&response);
-            // * Call other function
-            let additional_response = "some_other_function(response)".to_string();
-            HttpResponse::Ok().json(additional_response)
-        },
-        Err(error) => HttpResponse::InternalServerError().body(format!("Error: {:#?}", error)),
-    }
+async fn test() -> HttpResponse {
+    controller::test().await
 }
